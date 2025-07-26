@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "tailwind-scrollbar";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -77,6 +78,7 @@
   --sidebar-accent-foreground: oklch(0.216 0.006 56.043);
   --sidebar-border: oklch(0.923 0.003 48.717);
   --sidebar-ring: oklch(0.709 0.01 56.259);
+  scroll-behavior: smooth;
 }
 
 .dark {
@@ -115,10 +117,24 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring/50 scrollbar-thin scrollbar-thumb-muted-foreground scrollbar-hover:scrollbar-thumb-accent-foreground;
+    ::-webkit-scrollbar-thumb {
+      border-radius: 100vh;
+    }
   }
   body {
     @apply bg-background text-foreground;
   }
 }
 
+@utility dashboard-section {
+  @apply flex flex-col h-full;
+}
+
+@utility dashboard-section-header {
+  @apply p-4 sm:p-6 bg-background flex items-center gap-2 md:gap-4 border-b;
+}
+
+@utility dashboard-section-header-h1 {
+  @apply text-xl md:text-2xl font-medium md:font-semibold;
+}
