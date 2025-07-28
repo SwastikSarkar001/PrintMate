@@ -10,7 +10,6 @@ type SignUpData = {
   firstname: string
   lastname: string
   email: string
-  username: string
   phone: string
   password: string
   confirmPassword: string
@@ -27,7 +26,6 @@ export async function signUp(formData: FormData) {
     firstname: formData.get("firstname") as string,
     lastname: formData.get("lastname") as string,
     email: formData.get("email") as string,
-    username: formData.get("username") as string,
     phone: formData.get("phone") as string,
     password: formData.get("password") as string,
     confirmPassword: formData.get("confirmPassword") as string,
@@ -46,14 +44,6 @@ export async function signUp(formData: FormData) {
     newErrors.lastname = "Last name is required"
   } else if (data.lastname.length < 2) {
     newErrors.lastname = "Last name must be at least 2 characters"
-  }
-
-  if (!data.username?.trim()) {
-    newErrors.username = "Username is required"
-  } else if (data.username.length < 3) {
-    newErrors.username = "Username must be at least 3 characters"
-  } else if (!/^[a-zA-Z0-9_]+$/.test(data.username)) {
-    newErrors.username = "Username can only contain letters, numbers, and underscores"
   }
 
   if (!data.email?.trim()) {
@@ -91,7 +81,6 @@ export async function signUp(formData: FormData) {
       where: {
         OR: [
           { email: data.email },
-          { username: data.username },
           { phone: data.phone }
         ]
       }
@@ -100,7 +89,6 @@ export async function signUp(formData: FormData) {
     if (existingUser) {
       let message = 'User already exists with this '
       if (existingUser.email === data.email) message += 'email'
-      else if (existingUser.username === data.username) message += 'username'  
       else if (existingUser.phone === data.phone) message += 'phone number'
       
       return { success: false, errors: { general: message } }
@@ -115,7 +103,6 @@ export async function signUp(formData: FormData) {
         firstname: data.firstname,
         lastname: data.lastname,
         email: data.email,
-        username: data.username,
         phone: data.phone,
         password: hashedPassword
       },
@@ -124,7 +111,6 @@ export async function signUp(formData: FormData) {
         firstname: true,
         lastname: true,
         email: true,
-        username: true,
         phone: true,
         createdAt: true
       }
@@ -148,7 +134,7 @@ export async function signIn(formData: FormData) {
   const newErrors: Record<string, string> = {}
 
   if (!data.identifier?.trim()) {
-    newErrors.identifier = "Email, username, or phone is required"
+    newErrors.identifier = "Email or phone is required"
   }
 
   if (!data.password) {
@@ -161,12 +147,11 @@ export async function signIn(formData: FormData) {
   }
 
   try {
-    // Find user by email, username, or phone
+    // Find user by email or phone
     const user = await prisma.user.findFirst({
       where: {
         OR: [
           { email: data.identifier },
-          { username: data.identifier },
           { phone: data.identifier }
         ]
       }
@@ -175,7 +160,7 @@ export async function signIn(formData: FormData) {
     if (!user) {
       return { 
         success: false, 
-        errors: { identifier: 'No account found with this email, username, or phone number' } 
+        errors: { identifier: 'No account found with this email or phone number' } 
       }
     }
 
@@ -234,7 +219,6 @@ export async function getCurrentUser() {
         firstname: true,
         lastname: true,
         email: true,
-        username: true,
         phone: true,
         createdAt: true,
       }

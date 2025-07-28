@@ -14,7 +14,7 @@ export default function Navbar() {
   return (
     <header>
       <nav className="flex items-center gap-4 justify-between py-4 px-6 md:py-8 md:px-12 font-heading">
-        <Link href='/' className="text-xl">My Website</Link>
+        <Link href='/' className="text-xl">PrintMet</Link>
         <ul className="flex gap-4 max-sm:hidden">
           <li><Link href="/" className="hover:underline">Home</Link></li>
           <li><Link href="/about" className="hover:underline">About</Link></li>
@@ -73,7 +73,7 @@ export default function Navbar() {
                 <Separator orientation='horizontal' />
                 
                 <Button asChild className="w-full">
-                  <Link href="/login">Login / Register</Link>
+                  <Link href="/auth">Login / Register</Link>
                 </Button>
               </div>
             </PopoverContent>

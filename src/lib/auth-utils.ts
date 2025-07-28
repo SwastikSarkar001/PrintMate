@@ -17,7 +17,6 @@ export async function getCurrentUser() {
         firstname: true,
         lastname: true,
         email: true,
-        username: true,
         phone: true,
         createdAt: true,
       }
@@ -46,8 +45,4 @@ export function getFullName(user: { firstname: string; lastname: string }) {
 
 export function getUserInitials(user: { firstname: string; lastname: string }) {
   return `${user.firstname.charAt(0)}${user.lastname.charAt(0)}`.toUpperCase();
-}
-
-export function formatUserDisplay(user: { firstname: string; lastname: string; username: string }) {
-  return `${getFullName(user)} (@${user.username})`;
 }

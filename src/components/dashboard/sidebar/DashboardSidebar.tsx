@@ -31,7 +31,7 @@ export default function DashboardSidebar({ ...props }: React.ComponentProps<type
                   <GalleryVerticalEnd className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate text-xl font-semibold">My Website</span>
+                  <span className="truncate text-xl font-semibold">PrintMet</span>
                 </div>
               </Link>
             </SidebarMenuButton>

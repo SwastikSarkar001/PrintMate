@@ -9,7 +9,7 @@ export default function HelpSection() {
       </div>
       <div className="grow overflow-y-auto p-4 sm:p-6">
         <p className="text-muted-foreground text-center">
-          Get help with using My Website. Find answers to common questions, tutorials, and contact support.
+          Get help with using PrintMet. Find answers to common questions, tutorials, and contact support.
         </p>
       </div>
     </div>

@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { cookies } from 'next/headers'
 
 // Types for form validation
 type SignUpData = {
   firstname: string
   lastname: string
   email: string
-  username: string
   phone: string
   password: string
   confirmPassword: string
@@ -20,7 +20,6 @@ export async function POST(request: NextRequest) {
       firstname: body.firstname,
       lastname: body.lastname,
       email: body.email,
-      username: body.username,
       phone: body.phone,
       password: body.password,
       confirmPassword: body.confirmPassword,
@@ -39,14 +38,6 @@ export async function POST(request: NextRequest) {
       newErrors.lastname = "Last name is required"
     } else if (data.lastname.length < 2) {
       newErrors.lastname = "Last name must be at least 2 characters"
-    }
-
-    if (!data.username?.trim()) {
-      newErrors.username = "Username is required"
-    } else if (data.username.length < 3) {
-      newErrors.username = "Username must be at least 3 characters"
-    } else if (!/^[a-zA-Z0-9_]+$/.test(data.username)) {
-      newErrors.username = "Username can only contain letters, numbers, and underscores"
     }
 
     if (!data.email?.trim()) {
@@ -86,7 +77,6 @@ export async function POST(request: NextRequest) {
       where: {
         OR: [
           { email: data.email },
-          { username: data.username },
           { phone: data.phone }
         ]
       }
@@ -95,7 +85,6 @@ export async function POST(request: NextRequest) {
     if (existingUser) {
       let message = 'User already exists with this '
       if (existingUser.email === data.email) message += 'email'
-      else if (existingUser.username === data.username) message += 'username'  
       else if (existingUser.phone === data.phone) message += 'phone number'
       
       return NextResponse.json(
@@ -106,14 +95,13 @@ export async function POST(request: NextRequest) {
 
     // Hash password
     const hashedPassword = await bcrypt.hash(data.password, 12)
-
+    console.log('Hola!')
     // Create user
     const user = await prisma.user.create({
       data: {
         firstname: data.firstname,
         lastname: data.lastname,
         email: data.email,
-        username: data.username,
         phone: data.phone,
         password: hashedPassword
       },
@@ -122,10 +110,17 @@ export async function POST(request: NextRequest) {
         firstname: true,
         lastname: true,
         email: true,
-        username: true,
         phone: true,
         createdAt: true
       }
+    })
+
+    const cookieStore = await cookies()
+    cookieStore.set('userId', user.id, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
     })
 
     return NextResponse.json(

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { toast } from "sonner"
-import { redirect } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { UserLoginRequestBody } from "@/types/types"
 
 interface LoginFormProps extends React.ComponentPropsWithoutRef<"div"> {
@@ -16,17 +16,17 @@ interface LoginFormProps extends React.ComponentPropsWithoutRef<"div"> {
 
 export default function LoginForm({ className, onSwitchToSignup, ...props }: LoginFormProps) {
   const [formData, setFormData] = useState<UserLoginRequestBody>({
-    identifier: "", // Can be email, username, or phone
+    identifier: "", // Can be email or phone
     password: "",
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
-
+  const router = useRouter()
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
 
     if (!formData.identifier.trim()) {
-      newErrors.identifier = "Email, username, or phone is required"
+      newErrors.identifier = "Email or phone is required"
     }
 
     if (!formData.password) {
@@ -61,13 +61,14 @@ export default function LoginForm({ className, onSwitchToSignup, ...props }: Log
         localStorage.setItem('user', JSON.stringify(result.user));
         
         // Redirect to dashboard or home page
-        redirect('/dashboard')
+        // router.push('/dashboard')
+        window.location.href = '/dashboard'
       } else {
         toast.error(result.message || 'Login failed');
         
         // Handle specific field errors
         if (response.status === 404) {
-          setErrors({ identifier: 'No account found with this email/username/phone' });
+          setErrors({ identifier: 'No account found with this email or phone' });
         } else if (response.status === 401) {
           setErrors({ password: 'Incorrect password' });
         }
@@ -100,11 +101,11 @@ export default function LoginForm({ className, onSwitchToSignup, ...props }: Log
             <div className="grid gap-6">
               <div className="grid gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="login-identifier">Email, Username, or Phone</Label>
+                  <Label htmlFor="login-identifier">Email or Phone</Label>
                   <Input
                     id="login-identifier"
                     type="text"
-                    placeholder="john@example.com, johndoe, or +1234567890"
+                    placeholder="john@example.com or +919876543210"
                     value={formData.identifier}
                     onChange={(e) => handleInputChange("identifier", e.target.value)}
                     className={errors.identifier ? "border-red-500" : ""}

@@ -5,6 +5,10 @@ import DashboardSidebar from "@/components/dashboard/sidebar/DashboardSidebar";
 import RenderContent from "@/components/dashboard/RenderContent";
 import { ProtectedRoute } from "@/lib/auth-context";
 
+export const metadata = {
+  title: "Dashboard",
+  description: "Dashboard for managing your account and settings",
+};
 
 export default function Dashboard() {
   return (

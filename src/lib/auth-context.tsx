@@ -10,7 +10,6 @@ export type User = {
   firstname: string
   lastname: string
   email: string
-  username: string
   phone: string
   createdAt: string
 }
@@ -116,7 +115,11 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useRequireAuth()
 
   if (loading) {
-    return <LoaderOne />
+    return (
+      <div className='flex items-center justify-center h-screen'>
+        <LoaderOne />
+      </div>
+    )
   }
 
   if (!user) {

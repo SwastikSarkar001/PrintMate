@@ -158,7 +158,7 @@ export const FileUpload = () => {
 
   const handleFileUpload = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!filesWithProgress.length) return;
+    if (!filesWithProgress.length || !user) return;
     
     setUploading(true);
 
@@ -278,13 +278,13 @@ export const FileUpload = () => {
               <motion.div
                 variants={secondaryVariant}
                 className="absolute opacity-0 border border-dashed border-sky-400 inset-0 z-30 bg-transparent flex items-center justify-center h-32 mt-4 w-full max-w-[8rem] mx-auto rounded-md"
-              ></motion.div>
+              />
             )}
           </div>
           {filesWithProgress.length > 0 && (
             <button
               type="button"
-              className="mt-8 items-center justify-center w-full max-w-60 px-6 py-2.5 text-center text-black duration-200 bg-white border-2 border-white rounded-full inline-flex hover:bg-transparent hover:border-white hover:text-white focus:outline-none focus-visible:outline-white text-sm focus-visible:ring-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mt-8 items-center z-40 justify-center w-full max-w-60 px-6 py-2.5 text-center text-black duration-200 bg-white border-2 border-white rounded-full inline-flex hover:bg-transparent hover:border-white hover:text-white focus:outline-none focus-visible:outline-white text-sm focus-visible:ring-white disabled:cursor-not-allowed"
               onClick={handleFileUpload}
               disabled={uploading}
             >

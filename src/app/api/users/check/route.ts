@@ -1,20 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { CheckAvailabilityResponse } from '@/types/apis'
 
 // GET method for checking if user data already exists
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const email = searchParams.get('email')
-    const username = searchParams.get('username')
     const phone = searchParams.get('phone')
 
     // Check if at least one parameter is provided
-    if (!email && !username && !phone) {
+    if (!email && !phone) {
       return NextResponse.json(
         { 
           success: false, 
-          message: 'At least one parameter (email, username, or phone) is required' 
+          message: 'At least one parameter (email or phone) is required' 
         },
         { status: 400 }
       )
@@ -42,41 +42,11 @@ export async function GET(request: NextRequest) {
       checks.email = !!existingEmail
     }
 
-    // Check username if provided
-    if (username) {
-      // Basic username validation
-      if (username.length < 3) {
-        return NextResponse.json(
-          { 
-            success: false, 
-            message: 'Username must be at least 3 characters' 
-          },
-          { status: 400 }
-        )
-      }
-
-      if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-        return NextResponse.json(
-          { 
-            success: false, 
-            message: 'Username can only contain letters, numbers, and underscores' 
-          },
-          { status: 400 }
-        )
-      }
-
-      const existingUsername = await prisma.user.findUnique({
-        where: { username },
-        select: { id: true }
-      })
-      checks.username = !!existingUsername
-    }
-
     // Check phone if provided
     if (phone) {
       // Basic phone validation
       if (!/^\+?[\d\s\-\(\)]+$/.test(phone)) {
-        return NextResponse.json(
+        return NextResponse.json<CheckAvailabilityResponse>(
           { 
             success: false, 
             message: 'Invalid phone number format' 
@@ -95,21 +65,23 @@ export async function GET(request: NextRequest) {
     // Check if any field already exists
     const hasConflict = Object.values(checks).some(exists => exists)
 
-    return NextResponse.json(
+    return NextResponse.json<CheckAvailabilityResponse>(
       { 
-        success: true, 
-        available: !hasConflict,
-        checks,
-        message: hasConflict 
-          ? 'One or more fields are already taken' 
-          : 'All fields are available'
+        success: true,
+        data: {
+          available: !hasConflict,
+          checks,
+          message: hasConflict 
+            ? 'One or more fields are already taken' 
+            : 'All fields are available'
+        }
       },
       { status: 200 }
     )
 
   } catch (error) {
     console.error('User check error:', error)
-    return NextResponse.json(
+    return NextResponse.json<CheckAvailabilityResponse>(
       { 
         success: false, 
         message: 'An unexpected error occurred while checking user data' 
@@ -123,14 +95,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, username, phone } = body
+    const { email, phone } = body
 
     // Check if at least one field is provided
-    if (!email && !username && !phone) {
-      return NextResponse.json(
+    if (!email && !phone) {
+      return NextResponse.json<CheckAvailabilityResponse>(
         { 
           success: false, 
-          message: 'At least one field (email, username, or phone) is required' 
+          message: 'At least one field (email or phone) is required' 
         },
         { status: 400 }
       )
@@ -152,21 +124,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Validate and check username
-    if (username) {
-      if (username.length < 3) {
-        errors.username = 'Username must be at least 3 characters'
-      } else if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-        errors.username = 'Username can only contain letters, numbers, and underscores'
-      } else {
-        const existingUsername = await prisma.user.findUnique({
-          where: { username },
-          select: { id: true }
-        })
-        checks.username = !!existingUsername
-      }
-    }
-
     // Validate and check phone
     if (phone) {
       if (!/^\+?[\d\s\-\(\)]+$/.test(phone)) {
@@ -182,7 +139,7 @@ export async function POST(request: NextRequest) {
 
     // Return validation errors if any
     if (Object.keys(errors).length > 0) {
-      return NextResponse.json(
+      return NextResponse.json<CheckAvailabilityResponse>(
         { 
           success: false, 
           errors,
@@ -195,21 +152,23 @@ export async function POST(request: NextRequest) {
     // Check if any field already exists
     const hasConflict = Object.values(checks).some(exists => exists)
 
-    return NextResponse.json(
+    return NextResponse.json<CheckAvailabilityResponse>(
       { 
         success: true, 
-        available: !hasConflict,
-        checks,
-        message: hasConflict 
-          ? 'One or more fields are already taken' 
+        data: {
+          available: !hasConflict,
+          checks,
+          message: hasConflict 
+            ? 'One or more fields are already taken' 
           : 'All fields are available'
+        }
       },
       { status: 200 }
     )
 
   } catch (error) {
     console.error('User check error:', error)
-    return NextResponse.json(
+    return NextResponse.json<CheckAvailabilityResponse>(
       { 
         success: false, 
         message: 'An unexpected error occurred while checking user data' 

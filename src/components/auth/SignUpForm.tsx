@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
+import { CheckAvailabilityResponse } from "@/types/apis"
 
 interface SignupFormProps extends React.ComponentPropsWithoutRef<"div"> {
   onSwitchToLogin: () => void
@@ -19,14 +21,14 @@ export function SignupForm({ className, onSwitchToLogin, ...props }: SignupFormP
     firstname: "",
     lastname: "",
     email: "",
-    username: "",
     phone: "",
     password: "",
-    confirmPassword: "",
+    confirmPassword: ""
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
   const [checkingAvailability, setCheckingAvailability] = useState<Record<string, boolean>>({})
+  const router = useRouter()
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -41,14 +43,6 @@ export function SignupForm({ className, onSwitchToLogin, ...props }: SignupFormP
       newErrors.lastname = "Last name is required"
     } else if (formData.lastname.length < 2) {
       newErrors.lastname = "Last name must be at least 2 characters"
-    }
-
-    if (!formData.username.trim()) {
-      newErrors.username = "Username is required"
-    } else if (formData.username.length < 3) {
-      newErrors.username = "Username must be at least 3 characters"
-    } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
-      newErrors.username = "Username can only contain letters, numbers, and underscores"
     }
 
     if (!formData.email.trim()) {
@@ -79,7 +73,7 @@ export function SignupForm({ className, onSwitchToLogin, ...props }: SignupFormP
     return Object.keys(newErrors).length === 0
   }
 
-  const checkAvailability = async (field: 'email' | 'username' | 'phone', value: string) => {
+  const checkAvailability = async (field: 'email' | 'phone', value: string) => {
     if (!value.trim()) return;
 
     setCheckingAvailability(prev => ({ ...prev, [field]: true }));
@@ -93,9 +87,9 @@ export function SignupForm({ className, onSwitchToLogin, ...props }: SignupFormP
         body: JSON.stringify({ field, value }),
       });
 
-      const result = await response.json();
+      const result: CheckAvailabilityResponse = await response.json();
 
-      if (result.success && !result.available) {
+      if (result.success && !result.data.available) {
         setErrors(prev => ({ 
           ...prev, 
           [field]: `This ${field} is already taken` 
@@ -127,30 +121,27 @@ export function SignupForm({ className, onSwitchToLogin, ...props }: SignupFormP
           firstname: formData.firstname,
           lastname: formData.lastname,
           email: formData.email,
-          username: formData.username,
           phone: formData.phone,
           password: formData.password,
+          confirmPassword: formData.confirmPassword
         }),
       });
 
       const result = await response.json();
 
-      if (result.ok) {
-        toast.success('Account created successfully! Please sign in.');
-        
-        // Switch to login form
-        onSwitchToLogin();
+      if (result.success) {
+        toast.success('Account created successfully!');
+        // router.push(('/dashboard'));
+        window.location.href = '/dashboard'
         
         // Optional: Pre-fill the login form with email
         // You might want to pass this data to the parent component
       } else {
         toast.error(result.message || 'Registration failed');
         
-        // Handle specific field errors (e.g., duplicate email/username/phone)
+        // Handle specific field errors (e.g., duplicate email or phone)
         if (result.message.includes('email')) {
           setErrors({ email: result.message });
-        } else if (result.message.includes('username')) {
-          setErrors({ username: result.message });
         } else if (result.message.includes('phone')) {
           setErrors({ phone: result.message });
         }
@@ -172,9 +163,9 @@ export function SignupForm({ className, onSwitchToLogin, ...props }: SignupFormP
     }
   }
 
-  const handleBlur = (field: 'email' | 'username' | 'phone', value: string) => {
+  const handleBlur = (field: 'email' | 'phone', value: string) => {
     // Check availability when user leaves the field
-    if (['email', 'username', 'phone'].includes(field) && value.trim()) {
+    if (['email', 'phone'].includes(field) && value.trim()) {
       checkAvailability(field, value);
     }
   };
@@ -220,30 +211,6 @@ export function SignupForm({ className, onSwitchToLogin, ...props }: SignupFormP
                     />
                     {errors.lastname && <p className="text-sm text-red-500">{errors.lastname}</p>}
                   </div>
-                </div>
-
-                {/* Username */}
-                <div className="grid gap-2">
-                  <Label htmlFor="username">Username</Label>
-                  <div className="relative">
-                    <Input
-                      id="username"
-                      type="text"
-                      placeholder="johndoe"
-                      value={formData.username}
-                      onChange={(e) => handleInputChange("username", e.target.value)}
-                      onBlur={(e) => handleBlur("username", e.target.value)}
-                      className={errors.username ? "border-red-500" : ""}
-                      disabled={isLoading}
-                      required
-                    />
-                    {checkingAvailability.username && (
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
-                      </div>
-                    )}
-                  </div>
-                  {errors.username && <p className="text-sm text-red-500">{errors.username}</p>}
                 </div>
 
                 {/* Email */}
@@ -315,6 +282,7 @@ export function SignupForm({ className, onSwitchToLogin, ...props }: SignupFormP
                   <Input
                     id="signup-confirm-password"
                     type="password"
+                    name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
                     className={errors.confirmPassword ? "border-red-500" : ""}

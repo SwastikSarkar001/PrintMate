@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     const newErrors: Record<string, string> = {}
 
     if (!data.identifier?.trim()) {
-      newErrors.identifier = "Email, username, or phone is required"
+      newErrors.identifier = "Email or phone is required"
     }
 
     if (!data.password) {
@@ -31,12 +31,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Find user by email, username, or phone
+    // Find user by email or phone
     const user = await prisma.user.findFirst({
       where: {
         OR: [
           { email: data.identifier },
-          { username: data.identifier },
           { phone: data.identifier }
         ]
       }
@@ -46,7 +45,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           success: false, 
-          errors: { identifier: 'No account found with this email, username, or phone number' } 
+          errors: { identifier: 'No account found with this email or phone number' } 
         },
         { status: 401 }
       )
@@ -54,6 +53,7 @@ export async function POST(request: NextRequest) {
 
     // Verify password
     const isValidPassword = await bcrypt.compare(data.password, user.password)
+    // const isValidPassword = data.password === user.password
     
     if (!isValidPassword) {
       return NextResponse.json(
@@ -112,7 +112,6 @@ export async function GET() {
         firstname: true,
         lastname: true,
         email: true,
-        username: true,
         phone: true,
         createdAt: true,
       }

@@ -9,12 +9,18 @@ export async function POST(request: Request) {
   try {
     // parse the incoming multipart/form-data
     const formData = await request.formData();
-    // TODO: replace with your real auth/session lookup
-    const userId = '1';  
-    const folderPath = `Printing/user_${userId}`;
-
+    
     // grab all "files" fields
     const fileFields = formData.getAll('files');
+    const userId = formData.get("userId");
+    if (!userId || typeof userId !== 'string') {
+      return NextResponse.json(
+        { success: false, message: 'User ID is required' },
+        { status: 400 }
+      );
+    }
+    const folderPath = `Printing/user_${userId}`;
+
     const uploadResults = await Promise.all(
       fileFields.map(async (fileField) => {
         // each fileField is a Web File object
