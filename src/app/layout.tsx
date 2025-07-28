@@ -21,8 +21,8 @@ const raleway = Raleway({
 
 export const metadata: Metadata = {
   title: {
-    default: "PrintMet",
-    template: "%s | PrintMet",
+    default: "PrintMate",
+    template: "%s | PrintMate",
   },
   description: "Your one-stop solution for all printing needs. From business cards to banners, we provide high-quality printing services tailored to your requirements.",
 };

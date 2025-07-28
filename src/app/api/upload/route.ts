@@ -19,7 +19,7 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    const folderPath = `Printing/user_${userId}`;
+    const folderPath = `PrintMate/user_${userId}`;
 
     const uploadResults = await Promise.all(
       fileFields.map(async (fileField) => {
