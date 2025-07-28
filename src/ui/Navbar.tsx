@@ -14,7 +14,7 @@ export default function Navbar() {
   return (
     <header>
       <nav className="flex items-center gap-4 justify-between py-4 px-6 md:py-8 md:px-12 font-heading">
-        <Link href='/' className="text-xl">PrintMet</Link>
+        <Link href='/' className="text-xl">PrintMate</Link>
         <ul className="flex gap-4 max-sm:hidden">
           <li><Link href="/" className="hover:underline">Home</Link></li>
           <li><Link href="/about" className="hover:underline">About</Link></li>
