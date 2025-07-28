@@ -15,6 +15,7 @@ datasource db {
 
 model User {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  profileUrl String?
   firstname String?
   lastname  String?
   email     String   @unique
@@ -23,6 +24,25 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   profilePicture String? @db.String
+  files     File[]
   
   @@map("users")
+}
+
+model File {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  publicId    String   @unique
+  url         String
+  size        Int
+  type        String
+  format      String
+  resourceType String
+  width       Int?
+  height      Int?
+  uploadedAt  DateTime @default(now())
+  userId      String   @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("files")
 }

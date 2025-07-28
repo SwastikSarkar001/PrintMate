@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import NoDocumentsFound from "@/ui/NoDocumentsFound";
 import { CloudinaryFile } from "@/types/types";
+import { useAuth } from "@/lib/auth-context";
 
 type RecentFile = CloudinaryFile & {
   icon: React.ComponentType<{ className?: string }>;
@@ -67,6 +68,7 @@ function groupFilesByMonth(files: RecentFile[]) {
 }
 
 export default function RecentsSection() {
+  const { user } = useAuth();
   const [files, setFiles] = useState<RecentFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -76,13 +78,19 @@ export default function RecentsSection() {
   const observerRef = useRef<HTMLDivElement>(null);
 
   const fetchFiles = useCallback(async (cursor: string | null = null, append = false) => {
+    if (!user?.id) {
+      setError('User not authenticated');
+      setLoading(false);
+      return;
+    }
+
     try {
       if (!append) setLoading(true);
       else setLoadingMore(true);
 
       const params = new URLSearchParams({
         limit: '20',
-        // folder: 'your-folder-name/', // Add your folder if needed
+        userId: user.id,
       });
 
       if (cursor) {
@@ -118,12 +126,14 @@ export default function RecentsSection() {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, []);
+  }, [user?.id]);
 
   // Initial load
   useEffect(() => {
-    fetchFiles();
-  }, [fetchFiles]);
+    if (user?.id) {
+      fetchFiles();
+    }
+  }, [fetchFiles, user?.id]);
 
   // Infinite scroll observer
   useEffect(() => {

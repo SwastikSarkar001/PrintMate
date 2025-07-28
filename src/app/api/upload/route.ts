@@ -1,6 +1,7 @@
 // app/api/upload/route.ts
 import { NextResponse } from 'next/server';
 import { uploadStream } from '@/lib/cloudinary';
+import { prisma } from '@/lib/prisma';
 import path from 'path';
 import { FileUploadResponse } from '@/types/apis';
 
@@ -31,6 +32,26 @@ export async function POST(request: Request) {
       })
     );
 
+    // Save file information to database
+    const savedFiles = await Promise.all(
+      uploadResults.map(async (result) => {
+        return await prisma.file.create({
+          data: {
+            name: path.parse(result.public_id.split('/').pop() || result.public_id).name,
+            publicId: result.public_id,
+            url: result.secure_url,
+            size: result.bytes,
+            type: getFileType(result.resource_type, result.format),
+            format: result.format,
+            resourceType: result.resource_type,
+            width: result.width,
+            height: result.height,
+            userId: userId,
+          },
+        });
+      })
+    );
+
     // return just the data your UI needs
     return NextResponse.json<FileUploadResponse>({
       success: true,
@@ -50,4 +71,19 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+}
+
+function getFileType(resourceType: string, format: string): string {
+  if (resourceType === 'image') return 'image';
+  if (resourceType === 'video') return 'video';
+  if (resourceType === 'raw') {
+    const docFormats = ['pdf', 'doc', 'docx', 'txt'];
+    const spreadsheetFormats = ['xls', 'xlsx', 'csv'];
+    const presentationFormats = ['ppt', 'pptx'];
+    
+    if (docFormats.includes(format?.toLowerCase())) return 'document';
+    if (spreadsheetFormats.includes(format?.toLowerCase())) return 'spreadsheet';
+    if (presentationFormats.includes(format?.toLowerCase())) return 'presentation';
+  }
+  return format || 'file';
 }

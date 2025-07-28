@@ -1,78 +1,81 @@
 // app/api/files/recent/route.ts (for App Router)
 import { NextRequest, NextResponse } from 'next/server';
-import cloudinary from '@/lib/cloudinary'; // Ensure you have cloudinary configured
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const cursor = searchParams.get('cursor');
     const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 50);
-    const folder = searchParams.get('folder') || '';
-    const resourceType = searchParams.get('resource_type') || 'auto';
+    const userId = searchParams.get('userId');
 
-    const searchParamsCloudinary: any = {
-      type: 'upload',
-      max_results: limit,
-      resource_type: resourceType,
+    if (!userId) {
+      return NextResponse.json(
+        { message: 'User ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Build query parameters
+    const queryParams: any = {
+      where: {
+        userId: userId,
+      },
+      orderBy: {
+        uploadedAt: 'desc',
+      },
+      take: limit,
     };
 
-    if (folder) {
-      searchParamsCloudinary.prefix = folder;
-    }
-
+    // Add cursor for pagination
     if (cursor) {
-      searchParamsCloudinary.next_cursor = cursor;
+      queryParams.cursor = {
+        id: cursor,
+      };
+      queryParams.skip = 1; // Skip the cursor item
     }
 
-    const result = await cloudinary.api.resources(searchParamsCloudinary);
+    const result = await prisma.file.findMany(queryParams);
 
-    const transformedFiles = result.resources.map((file: any, index: number) => ({
-      id: `${file.public_id}_${index}`,
-      name: file.public_id.split('/').pop() || file.public_id,
-      publicId: file.public_id,
-      type: getFileType(file.resource_type, file.format),
-      size: formatFileSize(file.bytes),
-      modified: file.created_at,
-      url: file.secure_url,
-      resourceType: file.resource_type,
+    // Get total count for this user
+    const totalCount = await prisma.file.count({
+      where: {
+        userId: userId,
+      },
+    });
+
+    // Transform files to match the expected format
+    const transformedFiles = result.map((file) => ({
+      id: file.id,
+      name: file.name,
+      publicId: file.publicId,
+      type: file.type,
+      size: formatFileSize(file.size),
+      modified: file.uploadedAt.toISOString(),
+      url: file.url,
+      resourceType: file.resourceType,
       format: file.format,
       width: file.width,
       height: file.height,
     }));
 
-    transformedFiles.sort((a: any, b: any) => 
-      new Date(b.modified).getTime() - new Date(a.modified).getTime()
-    );
+    // Get the next cursor (ID of the last item)
+    const nextCursor = result.length === limit ? result[result.length - 1]?.id : null;
 
     return NextResponse.json({
       files: transformedFiles,
-      nextCursor: result.next_cursor || null,
-      hasMore: !!result.next_cursor,
-      total: result.total_count || transformedFiles.length,
+      nextCursor: nextCursor,
+      hasMore: !!nextCursor,
+      total: totalCount,
     });
 
   } catch (error) {
-    console.error('Error fetching files from Cloudinary:', error);
+    console.error('Error fetching files from database:', error);
     return NextResponse.json(
       { message: 'Failed to fetch files' },
       { status: 500 }
     );
   }
-}
-
-function getFileType(resourceType: string, format: string): string {
-  if (resourceType === 'image') return 'image';
-  if (resourceType === 'video') return 'video';
-  if (resourceType === 'raw') {
-    const docFormats = ['pdf', 'doc', 'docx', 'txt'];
-    const spreadsheetFormats = ['xls', 'xlsx', 'csv'];
-    const presentationFormats = ['ppt', 'pptx'];
-    
-    if (docFormats.includes(format?.toLowerCase())) return 'document';
-    if (spreadsheetFormats.includes(format?.toLowerCase())) return 'spreadsheet';
-    if (presentationFormats.includes(format?.toLowerCase())) return 'presentation';
-  }
-  return format || 'file';
 }
 
 function formatFileSize(bytes: number): string {
