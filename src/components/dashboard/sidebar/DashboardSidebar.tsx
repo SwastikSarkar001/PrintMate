@@ -1,3 +1,5 @@
+'use client'
+
 import {
   Sidebar,
   SidebarContent,
@@ -9,7 +11,6 @@ import {
 } from "@/components/ui/sidebar"
 import {
   GalleryVerticalEnd,
-  // ArrowUpCircleIcon,
 } from "lucide-react"
 
 import data from "@/data/sidebar-data"

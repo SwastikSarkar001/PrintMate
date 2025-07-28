@@ -11,9 +11,9 @@ const user: UserType = {
   userid: "1",
   firstname: "John",
   lastname: "Doe",
-  username: "shadcn",
-  email: "m@example.com",
-  avatar: "/avatars/shadcn.jpg"
+  username: "JohnDoe48",
+  email: "john.doe@example.com",
+  avatar: "/avatars/johndoe.jpg"
 }
 
 export default user;

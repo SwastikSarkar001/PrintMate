@@ -20,7 +20,7 @@ function ToasterTheme() {
   const { theme } = useTheme()
   return (
     <Toaster
-      position='top-center'
+      position='top-right'
       theme={theme as "light" | "dark" | "system" | undefined}
       richColors
       closeButton
