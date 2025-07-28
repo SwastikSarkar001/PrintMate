@@ -1,12 +1,11 @@
 import { createContext } from 'react'
-import { User } from '@/lib/auth-context'
-
+import { UserWithoutPassword } from '@/types/types'
 export type AuthContextType = {
-  user: User | null
+  user: UserWithoutPassword | null
   loading: boolean
-  login: (userData: User) => void
+  login: (userData: UserWithoutPassword) => void
   logout: () => void
-  updateUser: (userData: Partial<User>) => void
+  updateUser: (userData: Partial<UserWithoutPassword>) => void
   isAuthenticated: boolean
 }
 

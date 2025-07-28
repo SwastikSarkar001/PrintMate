@@ -1,4 +1,4 @@
-import { FileUploadResult } from "./types";
+import { FileUploadResult, UserWithoutPassword } from "./types";
 
 /**
  * Generic API response type that standardizes all API responses across the application.
@@ -80,3 +80,7 @@ export type CheckAvailabilityResponse = ApiResponse<{
   checks: Record<string, boolean>;
   message: string;
 }>;
+
+export type UserAuthResponse = ApiResponse<{
+  user: UserWithoutPassword
+}>

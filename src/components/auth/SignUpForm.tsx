@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-
+import { useAuth } from "@/lib/auth-context"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,16 +9,17 @@ import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import { CheckAvailabilityResponse } from "@/types/apis"
+import { RegisterData, registerSchema } from '@/lib/zod-validation'
+import { CheckAvailabilityResponse, UserAuthResponse } from "@/types/apis"
+import { UserWithoutPassword } from "@/types/types"
 
 interface SignupFormProps extends React.ComponentPropsWithoutRef<"div"> {
   onSwitchToLogin: () => void
 }
 
 export function SignupForm({ className, onSwitchToLogin, ...props }: SignupFormProps) {
-  const [formData, setFormData] = useState({
-    firstname: "",
-    lastname: "",
+  const { login } = useAuth()
+  const [formData, setFormData] = useState<RegisterData>({
     email: "",
     phone: "",
     password: "",
@@ -31,46 +31,19 @@ export function SignupForm({ className, onSwitchToLogin, ...props }: SignupFormP
   const router = useRouter()
 
   const validateForm = () => {
-    const newErrors: Record<string, string> = {}
-
-    if (!formData.firstname.trim()) {
-      newErrors.firstname = "First name is required"
-    } else if (formData.firstname.length < 2) {
-      newErrors.firstname = "First name must be at least 2 characters"
+    const validationResult = registerSchema.safeParse(formData)
+    if (validationResult.success) {
+      setErrors({})
     }
-
-    if (!formData.lastname.trim()) {
-      newErrors.lastname = "Last name is required"
-    } else if (formData.lastname.length < 2) {
-      newErrors.lastname = "Last name must be at least 2 characters"
+    else {
+      const newErrors: Record<string, string> = {}
+      validationResult.error.issues.map((error) => {
+        const field = error.path[0] as string
+        newErrors[field] = error.message
+      })
+      setErrors(newErrors)
     }
-
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required"
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address"
-    }
-
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Phone number is required"
-    } else if (!/^\+?[\d\s\-\(\)]+$/.test(formData.phone)) {
-      newErrors.phone = "Please enter a valid phone number"
-    }
-
-    if (!formData.password) {
-      newErrors.password = "Password is required"
-    } else if (formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters"
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-      newErrors.password = "Password must contain at least one uppercase letter, one lowercase letter, and one number"
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+    return validationResult.success
   }
 
   const checkAvailability = async (field: 'email' | 'phone', value: string) => {
@@ -118,8 +91,6 @@ export function SignupForm({ className, onSwitchToLogin, ...props }: SignupFormP
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          firstname: formData.firstname,
-          lastname: formData.lastname,
           email: formData.email,
           phone: formData.phone,
           password: formData.password,
@@ -127,15 +98,12 @@ export function SignupForm({ className, onSwitchToLogin, ...props }: SignupFormP
         }),
       });
 
-      const result = await response.json();
+      const result: UserAuthResponse = await response.json();
 
       if (result.success) {
         toast.success('Account created successfully!');
-        // router.push(('/dashboard'));
-        window.location.href = '/dashboard'
-        
-        // Optional: Pre-fill the login form with email
-        // You might want to pass this data to the parent component
+        login(result.data.user);
+        router.push('/dashboard')
       } else {
         toast.error(result.message || 'Registration failed');
         
@@ -181,38 +149,6 @@ export function SignupForm({ className, onSwitchToLogin, ...props }: SignupFormP
           <form onSubmit={handleSubmit}>
             <div className="grid gap-6">
               <div className="grid gap-4">
-                {/* Name Fields */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="firstname">First Name</Label>
-                    <Input
-                      id="firstname"
-                      type="text"
-                      placeholder="John"
-                      value={formData.firstname}
-                      onChange={(e) => handleInputChange("firstname", e.target.value)}
-                      className={errors.firstname ? "border-red-500" : ""}
-                      disabled={isLoading}
-                      required
-                    />
-                    {errors.firstname && <p className="text-sm text-red-500">{errors.firstname}</p>}
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="lastname">Last Name</Label>
-                    <Input
-                      id="lastname"
-                      type="text"
-                      placeholder="Doe"
-                      value={formData.lastname}
-                      onChange={(e) => handleInputChange("lastname", e.target.value)}
-                      className={errors.lastname ? "border-red-500" : ""}
-                      disabled={isLoading}
-                      required
-                    />
-                    {errors.lastname && <p className="text-sm text-red-500">{errors.lastname}</p>}
-                  </div>
-                </div>
-
                 {/* Email */}
                 <div className="grid gap-2">
                   <Label htmlFor="signup-email">Email</Label>

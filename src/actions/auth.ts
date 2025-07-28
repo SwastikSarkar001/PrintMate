@@ -1,5 +1,11 @@
 'use server'
 
+/**
+ * NOTE: Server actions are currently not in use in this project.
+ * This file is kept for future reference and potential use.
+ * If you need to implement server actions, you can refer to this file.
+ */
+
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { redirect } from 'next/navigation'

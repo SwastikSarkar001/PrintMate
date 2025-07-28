@@ -4,18 +4,10 @@ import React, { useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AuthContext, { AuthContextType } from '@/contexts/AuthContext'
 import { LoaderOne } from '@/components/ui/loader'
-
-export type User = {
-  id: string
-  firstname: string
-  lastname: string
-  email: string
-  phone: string
-  createdAt: string
-}
+import { UserWithoutPassword } from '@/types/types'
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<UserWithoutPassword | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
@@ -45,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth()
   }, [])
 
-  const login = (userData: User) => {
+  const login = (userData: UserWithoutPassword) => {
     setUser(userData)
     // Optionally store in localStorage as backup
     localStorage.setItem('user', JSON.stringify(userData))
@@ -67,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const updateUser = (userData: Partial<User>) => {
+  const updateUser = (userData: Partial<UserWithoutPassword>) => {
     if (user) {
       const updatedUser = { ...user, ...userData }
       setUser(updatedUser)

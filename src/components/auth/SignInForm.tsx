@@ -1,5 +1,6 @@
 "use client"
 
+import { useAuth } from "@/lib/auth-context"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,33 +9,36 @@ import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import { UserLoginRequestBody } from "@/types/types"
+import { LoginData, loginSchema } from "@/lib/zod-validation"
+import { UserAuthResponse } from "@/types/apis"
 
 interface LoginFormProps extends React.ComponentPropsWithoutRef<"div"> {
   onSwitchToSignup: () => void
 }
 
 export default function LoginForm({ className, onSwitchToSignup, ...props }: LoginFormProps) {
-  const [formData, setFormData] = useState<UserLoginRequestBody>({
+  const { login } = useAuth()
+  const [formData, setFormData] = useState<LoginData>({
     identifier: "", // Can be email or phone
     password: "",
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+
   const validateForm = () => {
-    const newErrors: Record<string, string> = {}
-
-    if (!formData.identifier.trim()) {
-      newErrors.identifier = "Email or phone is required"
+    const validationResult = loginSchema.safeParse(formData)
+    if (validationResult.success) {
+      setErrors({})
     }
-
-    if (!formData.password) {
-      newErrors.password = "Password is required"
+    else {
+      const newErrors: Record<string, string> = {}
+      validationResult.error.issues.map(error => {
+        newErrors[error.path[0] as string] = error.message
+      })
+      setErrors(newErrors)
     }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+    return validationResult.success
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,17 +56,12 @@ export default function LoginForm({ className, onSwitchToSignup, ...props }: Log
         body: JSON.stringify(formData),
       });
 
-      const result = await response.json();
+      const result: UserAuthResponse = await response.json();
 
       if (result.success) {
         toast.success('Login successful!');
-        
-        // Store user data in localStorage (you might want to use a proper state management solution)
-        localStorage.setItem('user', JSON.stringify(result.user));
-        
-        // Redirect to dashboard or home page
-        // router.push('/dashboard')
-        window.location.href = '/dashboard'
+        login(result.data.user)
+        router.push('/dashboard')
       } else {
         toast.error(result.message || 'Login failed');
         

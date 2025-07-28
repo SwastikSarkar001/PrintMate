@@ -28,6 +28,7 @@
     "@radix-ui/react-tooltip": "^1.2.7",
     "@tabler/icons-react": "^3.34.1",
     "bcryptjs": "^3.0.2",
+    "check-password-strength": "^3.0.0",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.7.0",
     "clsx": "^2.1.1",

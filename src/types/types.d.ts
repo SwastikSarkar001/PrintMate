@@ -1,7 +1,4 @@
-export type UserLoginRequestBody = {
-  identifier: string;
-  password: string;
-}
+export type UserWithoutPassword = Omit<User, 'password'>;
 
 export type FileUploadResult = {
   url: string;
