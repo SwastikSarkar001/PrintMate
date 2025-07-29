@@ -24,13 +24,13 @@ export async function POST(request: Request) {
     }
 
     const formData = await request.formData();
-    const fileFields = formData.getAll('files');
+    const fileFields: File[] = formData.getAll('files') as File[];
     const userId = formData.get("userId");
 
     console.log('Upload request details:', {
       fileCount: fileFields.length,
       userId: userId,
-      fileTypes: fileFields.map((f: any) => f.type)
+      fileTypes: fileFields.map((f) => f.type)
     });
 
     if (!userId || typeof userId !== 'string') {
