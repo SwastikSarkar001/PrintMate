@@ -6,64 +6,123 @@ import path from 'path';
 import { FileUploadResponse } from '@/types/apis';
 
 // export const runtime = 'nodejs';  // ensure Node runtime (so Buffer is available)
+
 export async function POST(request: Request) {
   try {
-    // parse the incoming multipart/form-data
+    console.log('Upload request received');
+
+    // Check database connection
+    try {
+      await prisma.$connect();
+      console.log('Database connection successful');
+    } catch (dbError) {
+      console.error('Database connection failed:', dbError);
+      return NextResponse.json<FileUploadResponse>(
+        { success: false, message: 'Database connection failed' },
+        { status: 500 }
+      );
+    }
+
     const formData = await request.formData();
-    
-    // grab all "files" fields
     const fileFields = formData.getAll('files');
     const userId = formData.get("userId");
+
+    console.log('Upload request details:', {
+      fileCount: fileFields.length,
+      userId: userId,
+      fileTypes: fileFields.map((f: any) => f.type)
+    });
+
     if (!userId || typeof userId !== 'string') {
       return NextResponse.json(
         { success: false, message: 'User ID is required' },
         { status: 400 }
       );
     }
+
     const folderPath = `PrintMate/user_${userId}`;
+    console.log('Starting file uploads to folder:', folderPath);
 
     const uploadResults = await Promise.all(
-      fileFields.map(async (fileField) => {
-        // each fileField is a Web File object
-        const webFile = fileField as File;
-        const arrayBuffer = await webFile.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        return uploadStream(buffer, folderPath, path.parse(webFile.name).name);
+      fileFields.map(async (fileField, index) => {
+        try {
+          const webFile = fileField as File;
+          const arrayBuffer = await webFile.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+
+          console.log(`Uploading file ${index + 1}:`, {
+            name: webFile.name,
+            type: webFile.type,
+            size: webFile.size
+          });
+
+          const result = await uploadStream(buffer, folderPath, path.parse(webFile.name).name, webFile.type);
+          console.log(`File ${index + 1} uploaded successfully:`, {
+            public_id: result.public_id,
+            resource_type: result.resource_type,
+            format: result.format
+          });
+
+          return result;
+        } catch (error) {
+          console.error(`Error uploading file ${index + 1}:`, error);
+          throw error;
+        }
       })
     );
 
-    // Save file information to database
+    console.log('All files uploaded successfully');
+
+    // Save file metadata to database
     const savedFiles = await Promise.all(
-      uploadResults.map(async (result) => {
-        return await prisma.file.create({
-          data: {
-            name: path.parse(result.public_id.split('/').pop() || result.public_id).name,
+      uploadResults.map(async (result, index) => {
+        try {
+          const webFile = fileFields[index] as File;
+          const originalName = webFile.name;
+
+          const fileType = getFileType(result.resource_type, result.format, result.public_id, originalName);
+
+          const fileData = {
+            name: originalName, // ✅ CHANGE: Use original file name
             publicId: result.public_id,
             url: result.secure_url,
             size: result.bytes,
-            type: getFileType(result.resource_type, result.format),
-            format: result.format,
+            type: fileType,
+            format: result.format || 'unknown',
             resourceType: result.resource_type,
-            width: result.width,
-            height: result.height,
+            width: result.width || null,
+            height: result.height || null,
             userId: userId,
-          },
-        });
+          };
+
+          console.log('Saving file to database:', fileData);
+
+          const savedFile = await prisma.file.create({
+            data: fileData,
+          });
+
+          console.log(`File ${index + 1} saved with ID:`, savedFile.id);
+          return savedFile;
+        } catch (error) {
+          console.error(`Error saving file ${index + 1} to database:`, error);
+          throw error;
+        }
       })
     );
 
-    // return just the data your UI needs
+    console.log('All files saved to database');
+
     return NextResponse.json<FileUploadResponse>({
       success: true,
       data: {
         files: uploadResults.map(r => ({
-          url:        r.secure_url,
-          public_id:  r.public_id,
-          format:     r.format,
-          bytes:      r.bytes,
+          url: r.secure_url,
+          public_id: r.public_id,
+          format: r.format,
+          bytes: r.bytes,
         })),
       }
-    })
+    });
   } catch (err) {
     console.error('Upload error:', err);
     return NextResponse.json<FileUploadResponse>(
@@ -73,17 +132,35 @@ export async function POST(request: Request) {
   }
 }
 
-function getFileType(resourceType: string, format: string): string {
+// ✅ REPLACED getFileType with more robust version
+function getFileType(resourceType: string, format: string, publicId?: string, originalFileName?: string): string {
+  console.log('getFileType called with:', { resourceType, format, publicId, originalFileName });
+
+  // Priority: Filename check
+  if (originalFileName?.toLowerCase().endsWith('.pdf')) {
+    console.log('Detected PDF file by original filename.');
+    return 'document';
+  }
+
+  // Cloudinary format fallback
+  if (format?.toLowerCase() === 'pdf') {
+    console.log('Detected PDF file from Cloudinary format');
+    return 'document';
+  }
+
+  // Use Cloudinary resource type
   if (resourceType === 'image') return 'image';
   if (resourceType === 'video') return 'video';
+
   if (resourceType === 'raw') {
-    const docFormats = ['pdf', 'doc', 'docx', 'txt'];
+    const docFormats = ['doc', 'docx', 'txt'];
     const spreadsheetFormats = ['xls', 'xlsx', 'csv'];
     const presentationFormats = ['ppt', 'pptx'];
-    
+
     if (docFormats.includes(format?.toLowerCase())) return 'document';
     if (spreadsheetFormats.includes(format?.toLowerCase())) return 'spreadsheet';
     if (presentationFormats.includes(format?.toLowerCase())) return 'presentation';
   }
+
   return format || 'file';
 }
