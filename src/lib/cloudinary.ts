@@ -7,11 +7,17 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export async function uploadStream(buffer: Buffer, folderPath: string, display_name: string) {
+export async function uploadStream(buffer: Buffer, folderPath: string, display_name: string, fileType?: string) {
   return new Promise<UploadApiResponse>((resolve, reject) => {
+    // Determine resource type based on file type
+    let resourceType: 'auto' | 'raw' | 'image' | 'video' = 'auto';
+    if (fileType && fileType.toLowerCase() === 'application/pdf') {
+      resourceType = 'raw';
+    }
+
     const stream = cloudinary.uploader.upload_stream({
       folder: folderPath,
-      resource_type: 'auto',
+      resource_type: resourceType,
       display_name: display_name,
     },
       (error, result) => {

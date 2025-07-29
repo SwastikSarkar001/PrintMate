@@ -1,19 +1,16 @@
-// app/api/files/recent/route.ts (for App Router)
+// app/api/files/recent/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const cursor = searchParams.get('cursor');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 50);
     const userId = searchParams.get('userId');
 
+    console.log('Fetching files for user:', userId);
+
     if (!userId) {
-      return NextResponse.json(
-        { message: 'User ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ message: 'User ID is required' }, { status: 400 });
     }
 
     // Build query parameters
@@ -36,27 +33,32 @@ export async function GET(request: NextRequest) {
       orderBy: {
       uploadedAt: 'desc',
       },
-      take: limit,
+      take: 10, // Only take the 10 most recent files
     };
 
-    // Add cursor for pagination
-    if (cursor) {
-      queryParams.cursor = {
-        id: cursor,
-      };
-      queryParams.skip = 1; // Skip the cursor item
-    }
+    console.log('Query parameters:', JSON.stringify(queryParams, null, 2));
 
     const result = await prisma.file.findMany(queryParams);
 
-    // Get total count for this user
-    const totalCount = await prisma.file.count({
-      where: {
-        userId: userId,
-      },
+    // Log all files for debugging
+    result.forEach((file, index) => {
+      console.log(`File ${index + 1}:`, {
+        id: file.id,
+        name: file.name,
+        type: file.type,
+        format: file.format,
+        resourceType: file.resourceType,
+        publicId: file.publicId
+      });
     });
 
-    // Transform files to match the expected format
+    // Get total count for this user
+    const totalCount = await prisma.file.count({
+      where: { userId: userId },
+    });
+
+    console.log('Total files for user:', totalCount);
+
     const transformedFiles = result.map((file) => ({
       id: file.id,
       name: file.name,
@@ -71,31 +73,22 @@ export async function GET(request: NextRequest) {
       height: file.height,
     }));
 
-    // Get the next cursor (ID of the last item)
-    const nextCursor = result.length === limit ? result[result.length - 1]?.id : null;
-
+    // --- CHANGE: Simplified response without pagination cursors ---
     return NextResponse.json({
       files: transformedFiles,
-      nextCursor: nextCursor,
-      hasMore: !!nextCursor,
       total: totalCount,
     });
 
   } catch (error) {
     console.error('Error fetching files from database:', error);
-    return NextResponse.json(
-      { message: 'Failed to fetch files' },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: 'Failed to fetch files' }, { status: 500 });
   }
 }
 
 function formatFileSize(bytes: number): string {
   if (!bytes) return '0 B';
-  
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
