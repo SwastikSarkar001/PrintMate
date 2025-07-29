@@ -3,7 +3,6 @@ import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { cookies } from 'next/headers'
 import { RegisterData, registerSchema } from '@/lib/zod-validation'
-import data from '@/data/sidebar-data'
 import { UserAuthResponse } from '@/types/apis'
 
 export async function POST(request: NextRequest) {

@@ -17,12 +17,24 @@ export async function GET(request: NextRequest) {
     }
 
     // Build query parameters
-    const queryParams: any = {
+    const queryParams: {
       where: {
-        userId: userId,
+      userId: string;
+      };
+      orderBy: {
+      uploadedAt: 'desc';
+      };
+      take: number;
+      cursor?: {
+      id: string;
+      };
+      skip?: number;
+    } = {
+      where: {
+      userId: userId,
       },
       orderBy: {
-        uploadedAt: 'desc',
+      uploadedAt: 'desc',
       },
       take: limit,
     };

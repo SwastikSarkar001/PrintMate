@@ -167,8 +167,8 @@ export default function MyFilesSection() {
     setExpandedFolders(newExpanded)
   }
 
-  const flattenFiles = (files: any[], level = 0): any[] => {
-    let result: any[] = []
+  const flattenFiles = (files: typeof fileStructure, level = 0) => {
+    let result: (typeof fileStructure[0] & { level: number })[] = []
     files.forEach((file) => {
       result.push({ ...file, level })
       if (file.children && expandedFolders.has(file.id)) {

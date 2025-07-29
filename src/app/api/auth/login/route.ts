@@ -46,9 +46,11 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       )
     }
+    // Exclude password from user data
+    const { password: userPassword, ...userWithoutPassword } = user
 
     // Verify password
-    const isValidPassword = await bcrypt.compare(body.password, user.password)
+    const isValidPassword = await bcrypt.compare(body.password, userPassword)
     // const isValidPassword = data.password === user.password
     
     if (!isValidPassword) {
@@ -63,15 +65,12 @@ export async function POST(request: NextRequest) {
 
     // Create session - store user ID in cookie
     const cookieStore = await cookies()
-    cookieStore.set('userId', user.id, {
+    cookieStore.set('userId', userWithoutPassword.id, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7, // 7 days
     })
-
-    // Return user data (excluding password)
-    const { password, ...userWithoutPassword } = user
     
     return NextResponse.json<UserAuthResponse>(
       { success: true, data: { user: userWithoutPassword } },

@@ -33,8 +33,8 @@ import { useAuth } from "@/lib/auth-context"
 
 export function NavUser() {
   const { user, logout } = useAuth()
-  if (!user) return null
   const { isMobile } = useSidebar()
+  if (!user) return null
   const fullName = `${user.firstname || ''} ${user.lastname || ''}`.trim() || user.phone
   return (
     <SidebarMenu>
