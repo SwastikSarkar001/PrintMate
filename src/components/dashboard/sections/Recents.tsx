@@ -245,7 +245,8 @@ export default function RecentsSection() {
                             <span>{file.size}</span>
                             <span>{isToday(file.modified) ? `Today at ${formatTime(file.modified)}` : formatDate(file.modified)}</span>
                           </div>
-                          <div className="flex items-center gap-1 pt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {/* Apply flex-wrap here */}
+                          <div className="flex items-center gap-1 pt-1 opacity-0 group-hover:opacity-100 transition-opacity flex-wrap">
                             <Button size="sm" variant="ghost" onClick={(e) => handlePreview(file, e)} className="h-6 px-2 text-xs"><EyeIcon className="h-3 w-3 mr-1" />Preview</Button>
                             <Button size="sm" variant="ghost" onClick={(e) => handleDownload(file, e)} className="h-6 px-2 text-xs"><DownloadIcon className="h-3 w-3 mr-1" />Download</Button>
                             {/* --- ADDED: Delete Button --- */}
