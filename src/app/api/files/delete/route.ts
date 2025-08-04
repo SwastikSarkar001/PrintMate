@@ -9,7 +9,7 @@ export async function DELETE(request: NextRequest) {
 
     if (!fileId || !publicId || !resourceType) {
       return NextResponse.json(
-        { message: 'Missing required file information for deletion' },
+        { success: false, message: 'Missing required file information for deletion' },
         { status: 400 }
       );
     }
@@ -39,6 +39,6 @@ export async function DELETE(request: NextRequest) {
     if (error instanceof Error && 'code' in error && error.code === 'P2025') {
        return NextResponse.json({ success: true, message: 'File already deleted from database.' });
     }
-    return NextResponse.json({ message: 'Failed to delete file' }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Failed to delete file' }, { status: 500 });
   }
 }

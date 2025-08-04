@@ -11,7 +11,6 @@ import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { RegisterData, registerSchema } from '@/lib/zod-validation'
 import { CheckAvailabilityResponse, UserAuthResponse } from "@/types/apis"
-import { UserWithoutPassword } from "@/types/types"
 
 interface SignupFormProps extends React.ComponentPropsWithoutRef<"div"> {
   onSwitchToLogin: () => void
