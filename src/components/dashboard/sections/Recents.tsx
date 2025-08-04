@@ -12,6 +12,7 @@ import {
   DownloadIcon,
   TrashIcon,
 } from "lucide-react";
+import { MdErrorOutline } from "react-icons/md";
 import { useState, useEffect, useCallback, useRef } from "react"; // Kept useRef for pagination
 
 import Image from "next/image";
@@ -226,7 +227,10 @@ export default function RecentsSection() {
             <span className="ml-2">Loading...</span>
           </div>
         ) : error ? (
-          <div className="p-8 text-red-500">Error: {error}</div>
+          <div className="flex items-center gap-2 justify-center flex-col h-full p-8 text-muted-foreground">
+            <MdErrorOutline className="size-16" />
+            <div className="max-w-1/2 text-center">Error: {error}</div>
+          </div>
         ) : sortedGroupKeys.length === 0 && !loading ? (
           <NoDocumentsFound />
         ) : (
