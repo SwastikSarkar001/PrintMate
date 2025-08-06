@@ -33,6 +33,15 @@ import Thumbnail from "@/ui/Thumbnail";
 import { pdfjs, Document, Page } from "react-pdf";
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose
+} from "@/components/ui/dialog";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.mjs',
@@ -456,12 +465,7 @@ function RecentFileCard({
     fileToDelete: CloudinaryFile,
     e: React.MouseEvent
   ) => {
-    e.stopPropagation();
-
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${fileToDelete.name}"? This action cannot be undone.`
-    );
-    if (!confirmed) return;
+    e.stopPropagation()
 
     setDeletingFileId(fileToDelete.id);
 
@@ -476,7 +480,7 @@ function RecentFileCard({
     });
 
     toast.promise(promise, {
-      loading: "Sending print request...",
+      loading: "Deleting selected file...",
       success: (data) => {
         setFiles((currentFiles) =>
           currentFiles.filter((f) => f.id !== fileToDelete.id)
@@ -502,7 +506,7 @@ function RecentFileCard({
       className="hover:bg-muted/50 transition-colors cursor-pointer relative"
     >
       {deletingFileId === file.id && (
-        <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-lg z-10">
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-xl z-10">
           <Loader2 className="h-8 w-8 animate-spin text-white" />
         </div>
       )}
@@ -510,7 +514,7 @@ function RecentFileCard({
         className="flex flex-col gap-4 h-full"
         onClick={() => handleFileClick(file)}
       >
-        <div className="aspect-square relative bg-muted rounded-lg flex items-center justify-center overflow-hidden">
+        <div className="aspect-square overflow-hidden border border-muted-foreground/50 relative bg-muted rounded-lg flex items-center justify-center">
           <Thumbnail file={file} />
         </div>
         <div className="space-y-1 mt-auto">
@@ -528,6 +532,7 @@ function RecentFileCard({
         </div>
         <div className="flex flex-wrap items-center gap-2 w-full *:grow">
           <Button
+            type="button"
             size="sm"
             variant="outline"
             onClick={(e) => handlePreview(file, e)}
@@ -537,24 +542,48 @@ function RecentFileCard({
             Preview
           </Button>
           <Button
+            type="button"
             size="sm"
-            variant="ghost"
+            variant="outline"
             onClick={(e) => handleDownload(file, e)}
-            className="h-6 px-2 text-xs"
+            className="h-6 cursor-pointer px-2 text-xs"
           >
             <DownloadIcon className="h-3 w-3 mr-1" />
             Download
           </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 px-2 text-xs text-red-500 hover:text-red-600"
-            onClick={(e) => handleDelete(file, e)}
-            disabled={!!deletingFileId}
-          >
-            <TrashIcon className="h-3 w-3 mr-1" />
-            Delete
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-6 cursor-pointer px-2 text-xs bg-red-500/10! hover:bg-red-400/10! text-red-500 hover:text-red-600"
+                disabled={!!deletingFileId}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <TrashIcon className="h-3 w-3 mr-1" />
+                Delete
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-sm" onClick={(e) => e.stopPropagation()}>
+              <DialogTitle>Confirm Deletion</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete this file? This action cannot be undone.
+              </DialogDescription>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline" className="cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                    Cancel
+                  </Button>
+                </DialogClose>
+                <DialogClose asChild>
+                  <Button variant="destructive" className="cursor-pointer" onClick={(e) => handleDelete(file, e)}>
+                    Delete
+                  </Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </CardContent>
     </Card>
