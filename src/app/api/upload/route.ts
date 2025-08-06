@@ -5,8 +5,6 @@ import { prisma } from '@/lib/prisma';
 import path from 'path';
 import { FileUploadResponse } from '@/types/apis';
 
-// export const runtime = 'nodejs';  // ensure Node runtime (so Buffer is available)
-
 export async function POST(request: Request) {
   try {
     console.log('Upload request received');
@@ -56,7 +54,7 @@ export async function POST(request: Request) {
             size: webFile.size
           });
 
-          const result = await uploadStream(buffer, folderPath, path.parse(webFile.name).name, webFile.type);
+          const result = await uploadStream(buffer, folderPath, path.parse(webFile.name).name);
           console.log(`File ${index + 1} uploaded successfully:`, {
             public_id: result.public_id,
             resource_type: result.resource_type,
@@ -74,7 +72,7 @@ export async function POST(request: Request) {
     console.log('All files uploaded successfully');
 
     // Save file metadata to database
-    const savedFiles = await Promise.all(
+    await Promise.all(
       uploadResults.map(async (result, index) => {
         try {
           const webFile = fileFields[index] as File;
