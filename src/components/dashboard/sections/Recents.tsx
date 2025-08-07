@@ -330,7 +330,7 @@ function PreviewSelectedFile({
       onClick={closePreview}
     >
       <div
-        className="relative bg-white dark:bg-gray-900 rounded-lg max-w-4xl min-h-[50vh] max-h-[90vh] w-full overflow-hidden flex flex-col"
+        className="relative bg-white dark:bg-gray-900 rounded-lg max-w-4xl h-[90vh] w-full flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-4 border-b">
@@ -387,41 +387,48 @@ function PreviewSelectedFile({
             </div>
           )
         }
-        <div className="p-4 overflow-auto relative">
-          {isImage(file) ? (
-            <Image
-              fill
-              src={getCloudinaryUrl(file.publicId, "preview")}
-              alt={file.name}
-              className="w-full h-auto max-h-full object-contain"
-            />
+        {
+          isImage(file) ? (
+            <div className="h-full bg-muted border border-muted-foreground/50 m-4 p-4 overflow-auto box-border">
+              <div className="relative h-full">
+                <Image
+                  fill
+                  src={getCloudinaryUrl(file.publicId)}
+                  alt={file.name}
+                  className="object-contain"
+                />
+
+              </div>
+            </div>
           ) : isPDF(file) ? (
             <Document
-              file={getCloudinaryUrl(file.publicId, "preview")}
+              file={getCloudinaryUrl(file.publicId)}
               onLoadSuccess={onDocumentLoadSuccess}
-              className="w-full flex gap-1 flex-col items-center justify-center"
+              className="m-4 bg-muted border border-muted-foreground/50 p-4 grow overflow-auto"
             >
-              {
-                Array.from (
-                  new Array(numPages),
-                  (_el, index) => (
-                    <Page
-                      key={index}
-                      scale={scale}
-                      pageNumber={index + 1}
-                      className="shrink-0"
-                    />
+              <div className='w-max mx-auto space-y-4'>
+                {
+                  Array.from (
+                    new Array(numPages),
+                    (_el, index) => (
+                      <Page
+                        key={index}
+                        scale={scale}
+                        pageNumber={index + 1}
+                        className="w-max"
+                      />
+                    )
                   )
-                )
-              }
+                }
+              </div>
             </Document>
           ) : (
             <div className="flex flex-col items-center justify-center h-48 text-muted-foreground">
               <FileIcon className="h-16 w-16 mb-4" />
               <span>Preview not available for this file type.</span>
             </div>
-          )}
-        </div>
+          )
+        }
       </div>
     </div>
   );

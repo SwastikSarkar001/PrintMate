@@ -15,14 +15,14 @@ export default function Thumbnail({ file }: { file: RecentFile }) {
         (file.type === 'image') ? (
           <Image
             fill
-            src={getCloudinaryUrl(file.publicId, "preview")}
+            src={getCloudinaryUrl(file.publicId)}
             alt={file.name}
             className="object-contain"
             loading="lazy"
           />
         ) : (file.type === 'document') ? (
           <Document
-            file={getCloudinaryUrl(file.publicId, "preview")}
+            file={getCloudinaryUrl(file.publicId)}
             className="relative flex overflow-hidden items-center justify-center size-full bg-muted"
             loading={<LoadingThumbnail />}
             error={<DefaultThumbnail />}
